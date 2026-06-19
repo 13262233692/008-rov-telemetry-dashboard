@@ -9,13 +9,31 @@
 #include <mutex>
 #include <random>
 #include <cmath>
+#include <vector>
 
 #include "SerialPort.h"
 #include "NMEAParser.h"
 #include "KalmanFilter.h"
+#include "PointCloudProcessor.h"
+
+static const int GRID_SIZE = 64;
+static const float GRID_SPACING = 1.5f;
+
+struct DepthGrid {
+    std::vector<std::vector<float>> depths;
+    std::vector<std::vector<bool>> valid;
+    int size;
+    float spacing;
+    DepthGrid() : size(GRID_SIZE), spacing(GRID_SPACING) {
+        depths.resize(size, std::vector<float>(size, 0.0f));
+        valid.resize(size, std::vector<bool>(size, false));
+    }
+};
 
 std::mutex dataMutex;
 TelemetryData currentData{};
+DepthGrid depthGrid;
+
 KalmanFilter headingFilter(0.001, 0.5, 1.0, 0.0);
 KalmanFilter depthFilter(0.001, 0.3, 1.0, 0.0);
 KalmanFilter rollFilter(0.001, 0.4, 1.0, 0.0);
@@ -56,6 +74,60 @@ std::string telemetryToJson(const TelemetryData& d) {
         json += "}";
     }
     return json;
+}
+
+std::string pointCloudToJson(const PointCloudBatch& batch) {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(3);
+    oss << "{\"type\":\"pointcloud\",\"beamCount\":" << batch.beamCount
+        << ",\"timestamp\":\"" << batch.timestamp << "\",\"points\":[";
+    for (size_t i = 0; i < batch.points.size(); ++i) {
+        if (i > 0) oss << ",";
+        const auto& p = batch.points[i];
+        oss << "[" << safeDouble(p.x) << "," << safeDouble(p.y)
+            << "," << safeDouble(p.z) << "," << safeDouble(p.intensity) << "]";
+    }
+    oss << "]}";
+    return oss.str();
+}
+
+std::string gridToJson(const DepthGrid& grid) {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(3);
+    oss << "{\"type\":\"grid\",\"size\":" << grid.size
+        << ",\"spacing\":" << grid.spacing << ",\"heights\":[";
+    for (int i = 0; i < grid.size; ++i) {
+        if (i > 0) oss << ",";
+        oss << "[";
+        for (int j = 0; j < grid.size; ++j) {
+            if (j > 0) oss << ",";
+            if (grid.valid[i][j]) {
+                oss << safeDouble(grid.depths[i][j]);
+            } else {
+                oss << "null";
+            }
+        }
+        oss << "]";
+    }
+    oss << "]}";
+    return oss.str();
+}
+
+void updateDepthGrid(const std::vector<Point3D>& points, DepthGrid& grid) {
+    int half = grid.size / 2;
+    for (const auto& p : points) {
+        int gi = half + static_cast<int>(std::round(p.y / grid.spacing));
+        int gj = half + static_cast<int>(std::round(p.x / grid.spacing));
+        if (gi >= 0 && gi < grid.size && gj >= 0 && gj < grid.size) {
+            float z = -p.z;
+            if (!grid.valid[gi][gj] || std::abs(z - grid.depths[gi][gj]) > 0.1f) {
+                grid.depths[gi][gj] = z;
+            } else {
+                grid.depths[gi][gj] = grid.depths[gi][gj] * 0.8f + z * 0.2f;
+            }
+            grid.valid[gi][gj] = true;
+        }
+    }
 }
 
 void updateTelemetry(const TelemetryData& newData, WebSocketServer& ws) {
@@ -107,8 +179,23 @@ void runSimulator(WebSocketServer& ws, std::atomic<bool>& running) {
     double simSpeed = 0.5;
     double simRoll = 0.0;
     double simPitch = 0.0;
+    double posX = 0.0;
+    double posY = 0.0;
     int tick = 0;
 
+    {
+        std::lock_guard<std::mutex> lock(dataMutex);
+        for (int i = 0; i < GRID_SIZE; ++i) {
+            for (int j = 0; j < GRID_SIZE; ++j) {
+                double wx = (j - GRID_SIZE / 2) * GRID_SPACING;
+                double wy = (i - GRID_SIZE / 2) * GRID_SPACING;
+                depthGrid.depths[i][j] = PointCloudProcessor::seafloorHeight(wx, wy, 25.0);
+                depthGrid.valid[i][j] = true;
+            }
+        }
+    }
+
+    int pcTick = 0;
     while (running) {
         tick++;
         simHeading += 0.05 + headingNoise(rng) * 0.02;
@@ -123,6 +210,8 @@ void runSimulator(WebSocketServer& ws, std::atomic<bool>& running) {
         simPitch = 3.0 * std::cos(tick * 0.025) + pitchNoise(rng);
 
         double hdgRad = simHeading * 3.14159265358979323846 / 180.0;
+        posX += simSpeed * 0.1 * std::cos(hdgRad);
+        posY += simSpeed * 0.1 * std::sin(hdgRad);
 
         TelemetryData d{};
         d.heading = simHeading + headingNoise(rng);
@@ -139,6 +228,32 @@ void runSimulator(WebSocketServer& ws, std::atomic<bool>& running) {
         d.timestamp = NMEAParser::getCurrentTimestamp();
 
         updateTelemetry(d, ws);
+
+        if (tick % 2 == 0) {
+            pcTick++;
+            int beamCount = 128;
+            double swathWidth = 40.0;
+            auto points = PointCloudProcessor::generateSeafloorPoints(
+                posX, posY, simDepth, beamCount, swathWidth, hdgRad, rng
+            );
+
+            {
+                std::lock_guard<std::mutex> lock(dataMutex);
+                updateDepthGrid(points, depthGrid);
+            }
+
+            PointCloudBatch batch{};
+            batch.beamCount = beamCount;
+            batch.points = points;
+            batch.timestamp = NMEAParser::getCurrentTimestamp();
+            ws.broadcast(pointCloudToJson(batch));
+        }
+
+        if (tick % 10 == 0) {
+            std::lock_guard<std::mutex> lock(dataMutex);
+            ws.broadcast(gridToJson(depthGrid));
+        }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }

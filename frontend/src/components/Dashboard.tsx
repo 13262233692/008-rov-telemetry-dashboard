@@ -1,7 +1,10 @@
 import AttitudeIndicator from './components/AttitudeIndicator';
 import DepthGauge from './components/DepthGauge';
 import SpeedVector from './components/SpeedVector';
+import TerrainExplorer from './components/TerrainExplorer';
+import ErrorBoundary from './components/ErrorBoundary';
 import type { TelemetryData, ConnectionStatus } from '../types';
+import type { PointCloudPoint, GridData } from './TerrainExplorer';
 
 function safeToFixed(v: number, digits: number): string {
   if (!Number.isFinite(v)) return '---';
@@ -13,9 +16,18 @@ interface DashboardProps {
   status: ConnectionStatus;
   isStale: boolean;
   isDegraded: boolean;
+  pointCloud: PointCloudPoint[];
+  gridData: GridData | null;
 }
 
-export default function Dashboard({ data, status, isStale, isDegraded }: DashboardProps) {
+export default function Dashboard({
+  data,
+  status,
+  isStale,
+  isDegraded,
+  pointCloud,
+  gridData,
+}: DashboardProps) {
   const totalSpeedMs = Math.sqrt(
     data.speedNorth * data.speedNorth +
     data.speedEast * data.speedEast
@@ -23,23 +35,29 @@ export default function Dashboard({ data, status, isStale, isDegraded }: Dashboa
   const totalSpeedKn = Number.isFinite(totalSpeedMs) ? totalSpeedMs * 1.94384 : NaN;
 
   return (
-    <main className="dashboard">
+    <main className="dashboard full-view">
       {isDegraded && (
         <div className="degradation-banner">
           ⚠ 通信链路不稳定 — 连续报文异常，仪表盘数据可能滞后
         </div>
       )}
-      <div className="dashboard-col-left">
-        <DepthGauge depth={data.depth} />
-      </div>
 
-      <div className="dashboard-center">
-        <AttitudeIndicator
-          heading={data.heading}
-          pitch={data.pitch}
-          roll={data.roll}
-          size={380}
-        />
+      <section className="panel panel-left">
+        <div className="panel-title">深度</div>
+        <DepthGauge depth={data.depth} />
+      </section>
+
+      <section className="panel panel-center">
+        <div className="panel-row">
+          <div className="panel-title">姿态与航向</div>
+          <AttitudeIndicator
+            heading={data.heading}
+            pitch={data.pitch}
+            roll={data.roll}
+            size={320}
+          />
+        </div>
+
         <div className={`data-panel${isStale ? ' stale' : ''}`}>
           <div className="data-card">
             <div className="data-label">艏向 HEADING</div>
@@ -84,16 +102,43 @@ export default function Dashboard({ data, status, isStale, isDegraded }: Dashboa
             <div className="data-sub">{safeToFixed(data.speedDown, 3)} m/s</div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="dashboard-col-right">
+      <section className="panel panel-right">
+        <div className="panel-title">速度矢量</div>
         <SpeedVector
           speedNorth={data.speedNorth}
           speedEast={data.speedEast}
           speedDown={data.speedDown}
-          size={380}
+          size={320}
         />
-      </div>
+      </section>
+
+      <section className="panel panel-bottom">
+        <div className="panel-title">
+          <span>🌊 海底地形实时探查</span>
+          <span className="panel-sub">多波束测深 · 实时网格重建</span>
+        </div>
+        <ErrorBoundary>
+          <TerrainExplorer
+            gridData={gridData}
+            points={pointCloud}
+            heading={data.heading}
+            pitch={data.pitch}
+            roll={data.roll}
+            width={640}
+            height={440}
+            showWireframe
+          />
+        </ErrorBoundary>
+        <div className="terrain-legend">
+          <div className="legend-label">浅</div>
+          <div className="legend-bar">
+            <div className="legend-gradient" />
+          </div>
+          <div className="legend-label">深</div>
+        </div>
+      </section>
     </main>
   );
 }

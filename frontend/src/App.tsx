@@ -3,7 +3,7 @@ import Dashboard from './components/Dashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
-  const { data, status, errorStats, isStale } = useTelemetry('ws://localhost:8080');
+  const { data, status, errorStats, isStale, pointCloud, gridData } = useTelemetry('ws://localhost:8080');
 
   const timeStr = status.lastUpdate ?? '';
   const timeDisplay = timeStr ? timeStr.slice(11, 19) : '--:--:--';
@@ -55,7 +55,7 @@ export default function App() {
         </div>
       </header>
       <ErrorBoundary>
-        <Dashboard data={data} status={status} isStale={isStale} isDegraded={errorStats.isDegraded} />
+        <Dashboard data={data} status={status} isStale={isStale} isDegraded={errorStats.isDegraded} pointCloud={pointCloud} gridData={gridData} />
       </ErrorBoundary>
     </div>
   );

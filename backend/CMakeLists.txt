@@ -19,6 +19,7 @@ set(SOURCES
     src/NMEAParser.cpp
     src/KalmanFilter.cpp
     src/WebSocketServer.cpp
+    src/PointCloudProcessor.cpp
 )
 
 add_executable(rov_gateway ${SOURCES})

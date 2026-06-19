@@ -385,6 +385,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\src\NMEAParser.cpp" />
     <ClCompile Include="D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\src\KalmanFilter.cpp" />
     <ClCompile Include="D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\src\WebSocketServer.cpp" />
+    <ClCompile Include="D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\src\PointCloudProcessor.cpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

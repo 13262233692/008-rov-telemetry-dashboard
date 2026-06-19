@@ -16,6 +16,9 @@
     <ClCompile Include="D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\src\WebSocketServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\src\PointCloudProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\CMakeLists.txt" />

@@ -24,6 +24,8 @@ class NMEAParser {
 public:
     static std::optional<TelemetryData> parseSentence(const std::string& sentence);
     static std::string getCurrentTimestamp();
+    static std::vector<std::string> splitFields(const std::string& sentence);
+    static double safeStod(const std::string& s, double def = 0.0);
 
 private:
     static std::optional<TelemetryData> parseHDG(const std::vector<std::string>& fields);
@@ -31,8 +33,6 @@ private:
     static std::optional<TelemetryData> parseVLW(const std::vector<std::string>& fields);
     static std::optional<TelemetryData> parseVTG(const std::vector<std::string>& fields);
 
-    static std::vector<std::string> splitFields(const std::string& sentence);
     static uint8_t calculateChecksum(const std::string& sentence);
     static bool validateChecksum(const std::string& sentence);
-    static double safeStod(const std::string& s, double def = 0.0);
 };
