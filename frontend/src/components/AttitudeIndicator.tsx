@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
 
+function safeNum(v: number, fallback: number = 0): number {
+  return Number.isFinite(v) ? v : fallback;
+}
+
 interface AttitudeIndicatorProps {
   heading: number;
   pitch: number;
@@ -13,6 +17,10 @@ export default function AttitudeIndicator({
   roll,
   size = 320,
 }: AttitudeIndicatorProps) {
+  const h = safeNum(heading);
+  const p = safeNum(pitch);
+  const r = safeNum(roll);
+
   const center = size / 2;
   const radius = center - 10;
 
@@ -36,7 +44,7 @@ export default function AttitudeIndicator({
     return ticks;
   }, []);
 
-  const clampedPitch = Math.max(-60, Math.min(60, pitch));
+  const clampedPitch = Math.max(-60, Math.min(60, p));
   const pitchTranslate = (clampedPitch / 90) * (radius * 0.75);
 
   return (
@@ -70,7 +78,7 @@ export default function AttitudeIndicator({
 
         <g clipPath="url(#ballClip)">
           <g style={{
-            transform: `rotate(${roll}deg)`,
+            transform: `rotate(${r}deg)`,
             transformOrigin: `${center}px ${center}px`,
             transition: 'transform 80ms linear',
           }}>
@@ -153,7 +161,7 @@ export default function AttitudeIndicator({
           points={`${center},${center - radius - 4} ${center - 10},${center - radius - 20} ${center + 10},${center - radius - 20}`}
           fill="#ff6b6b" stroke="#ff4757" strokeWidth="2" />
         <g style={{
-          transform: `rotate(${heading}deg)`,
+          transform: `rotate(${h}deg)`,
           transformOrigin: `${center}px ${center}px`,
           transition: 'transform 60ms linear',
         }}>
@@ -168,7 +176,7 @@ export default function AttitudeIndicator({
           <text x={center} y={center + radius * 0.55 + 22}
             fill="#58a6ff" fontSize="18" fontWeight="700" textAnchor="middle"
             fontFamily="monospace" filter="url(#glow)">
-            {heading.toFixed(1).padStart(6, '0')}°
+            {safeNum(h).toFixed(1).padStart(6, '0')}°
           </text>
         </g>
 
@@ -176,11 +184,11 @@ export default function AttitudeIndicator({
           fontWeight="600" letterSpacing="2">姿态 ATTITUDE</text>
         <text x={center - radius * 0.85} y={center + radius * 0.95}
           fill="#8b949e" fontSize="11" fontFamily="monospace">
-          P {pitch.toFixed(1)}°
+          P {safeNum(p).toFixed(1)}°
         </text>
         <text x={center + radius * 0.85} y={center + radius * 0.95}
           fill="#8b949e" fontSize="11" fontFamily="monospace" textAnchor="end">
-          R {roll.toFixed(1)}°
+          R {safeNum(r).toFixed(1)}°
         </text>
       </svg>
     </div>

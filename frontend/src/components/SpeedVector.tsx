@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
 
+function safeNum(v: number, fallback: number = 0): number {
+  return Number.isFinite(v) ? v : fallback;
+}
+
 interface SpeedVectorProps {
   speedNorth: number;
   speedEast: number;
@@ -13,19 +17,22 @@ export default function SpeedVector({
   speedDown = 0,
   size = 300,
 }: SpeedVectorProps) {
+  const sn = safeNum(speedNorth);
+  const se = safeNum(speedEast);
+  const sd = safeNum(speedDown);
   const center = size / 2;
   const radius = center - 40;
 
   const { magnitude, angleDeg, knots, mps } = useMemo(() => {
-    const mag = Math.sqrt(speedNorth * speedNorth + speedEast * speedEast);
-    const ang = Math.atan2(speedEast, speedNorth) * 180 / Math.PI;
+    const mag = Math.sqrt(sn * sn + se * se);
+    const ang = Math.atan2(se, sn) * 180 / Math.PI;
     return {
-      magnitude: mag,
-      angleDeg: ang,
-      knots: mag * 1.94384,
-      mps: mag,
+      magnitude: Number.isFinite(mag) ? mag : 0,
+      angleDeg: Number.isFinite(ang) ? ang : 0,
+      knots: Number.isFinite(mag) ? mag * 1.94384 : 0,
+      mps: Number.isFinite(mag) ? mag : 0,
     };
-  }, [speedNorth, speedEast]);
+  }, [sn, se]);
 
   const arrowLen = Math.min(magnitude * 35, radius - 14);
   const arrowRad = (angleDeg - 90) * Math.PI / 180;
@@ -167,7 +174,7 @@ export default function SpeedVector({
           </text>
           <text x={size / 2 - 68} y={size - 22}
             fill="#9ca3af" fontSize="10" fontFamily="monospace">
-            Vd {speedDown.toFixed(3)} m/s
+            Vd {sd.toFixed(3)} m/s
           </text>
         </g>
       </svg>

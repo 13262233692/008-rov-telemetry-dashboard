@@ -338,6 +338,8 @@ void WebSocketServer::clientHandler(SocketType clientSocket) {
 }
 
 void WebSocketServer::broadcast(const std::string& message) {
+    if (message.empty()) return;
+    if (message.front() != '{' || message.back() != '}') return;
     std::string frame = encodeFrame(message);
     std::lock_guard<std::mutex> lock(clientsMutex_);
     for (SocketType client : clients_) {

@@ -269,3 +269,31 @@ body {
   margin-top: 2px;
   font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
 }
+
+.degradation-banner {
+  grid-column: 1 / -1;
+  padding: 10px 20px;
+  background: linear-gradient(90deg, rgba(255, 107, 107, 0.12) 0%, rgba(255, 146, 43, 0.12) 100%);
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  border-radius: 8px;
+  color: #ffd43b;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.5px;
+  animation: banner-pulse 2s ease-in-out infinite;
+}
+
+@keyframes banner-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.data-panel.stale .data-card {
+  opacity: 0.55;
+  transition: opacity 0.6s ease;
+}
+
+.data-panel.stale .data-value {
+  filter: saturate(0.3);
+}

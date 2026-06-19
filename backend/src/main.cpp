@@ -23,25 +23,39 @@ KalmanFilter pitchFilter(0.001, 0.4, 1.0, 0.0);
 KalmanFilter speedNFilter(0.001, 0.2, 1.0, 0.0);
 KalmanFilter speedEFilter(0.001, 0.2, 1.0, 0.0);
 
+static double safeDouble(double v) {
+    if (!std::isfinite(v)) return 0.0;
+    return v;
+}
+
 std::string telemetryToJson(const TelemetryData& d) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(3);
     oss << "{";
-    oss << "\"heading\":" << d.heading << ",";
-    oss << "\"roll\":" << d.roll << ",";
-    oss << "\"pitch\":" << d.pitch << ",";
-    oss << "\"depth\":" << d.depth << ",";
-    oss << "\"depthFeet\":" << d.depthFeet << ",";
-    oss << "\"speedNorth\":" << d.speedNorth << ",";
-    oss << "\"speedEast\":" << d.speedEast << ",";
-    oss << "\"speedDown\":" << d.speedDown << ",";
-    oss << "\"speedGroundNorth\":" << d.speedGroundNorth << ",";
-    oss << "\"speedGroundEast\":" << d.speedGroundEast << ",";
-    oss << "\"speedGroundDown\":" << d.speedGroundDown << ",";
-    oss << "\"waterTemp\":" << d.waterTemp << ",";
+    oss << "\"heading\":" << safeDouble(d.heading) << ",";
+    oss << "\"roll\":" << safeDouble(d.roll) << ",";
+    oss << "\"pitch\":" << safeDouble(d.pitch) << ",";
+    oss << "\"depth\":" << safeDouble(d.depth) << ",";
+    oss << "\"depthFeet\":" << safeDouble(d.depthFeet) << ",";
+    oss << "\"speedNorth\":" << safeDouble(d.speedNorth) << ",";
+    oss << "\"speedEast\":" << safeDouble(d.speedEast) << ",";
+    oss << "\"speedDown\":" << safeDouble(d.speedDown) << ",";
+    oss << "\"speedGroundNorth\":" << safeDouble(d.speedGroundNorth) << ",";
+    oss << "\"speedGroundEast\":" << safeDouble(d.speedGroundEast) << ",";
+    oss << "\"speedGroundDown\":" << safeDouble(d.speedGroundDown) << ",";
+    oss << "\"waterTemp\":" << safeDouble(d.waterTemp) << ",";
     oss << "\"timestamp\":\"" << d.timestamp << "\"";
     oss << "}";
-    return oss.str();
+    std::string json = oss.str();
+    size_t braceDepth = 0;
+    for (char c : json) {
+        if (c == '{') braceDepth++;
+        else if (c == '}') braceDepth--;
+    }
+    if (braceDepth != 0) {
+        json += "}";
+    }
+    return json;
 }
 
 void updateTelemetry(const TelemetryData& newData, WebSocketServer& ws) {

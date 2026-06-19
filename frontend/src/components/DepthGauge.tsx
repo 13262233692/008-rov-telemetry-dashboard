@@ -11,8 +11,8 @@ export default function DepthGauge({
   width = 140,
   height = 480,
 }: DepthGaugeProps) {
-  const safeDepth = Math.max(0, Math.min(maxDepth, depth));
-  const fillRatio = safeDepth / maxDepth;
+  const safeDepthVal = Number.isFinite(depth) ? Math.max(0, Math.min(maxDepth, depth)) : 0;
+  const fillRatio = safeDepthVal / maxDepth;
   const padding = { top: 60, bottom: 50, left: 44, right: 30 };
   const barTop = padding.top;
   const barBottom = height - padding.bottom;
@@ -31,7 +31,7 @@ export default function DepthGauge({
     ticks.push({ val, y, major });
   }
 
-  const waterColor = safeDepth / maxDepth;
+  const waterColor = safeDepthVal / maxDepth;
 
   return (
     <div className="gauge depth-gauge" style={{ width, height }}>
@@ -128,7 +128,7 @@ export default function DepthGauge({
           <text x={width / 2} y={height - 22}
             fill="#69db7c" fontSize="18" fontWeight="700"
             textAnchor="middle" fontFamily="monospace" filter="url(#depthGlow)">
-            {safeDepth.toFixed(2)} m
+            {safeDepthVal.toFixed(2)} m
           </text>
         </g>
       </svg>

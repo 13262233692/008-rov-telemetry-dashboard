@@ -1,8 +1,9 @@
 import { useTelemetry } from './hooks/useTelemetry';
 import Dashboard from './components/Dashboard';
+import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
-  const { data, status } = useTelemetry('ws://localhost:8080');
+  const { data, status, errorStats, isStale } = useTelemetry('ws://localhost:8080');
 
   const timeStr = status.lastUpdate ?? '';
   const timeDisplay = timeStr ? timeStr.slice(11, 19) : '--:--:--';
@@ -29,7 +30,7 @@ export default function App() {
             <span className={`status-dot ${status.isConnected ? 'connected' : ''}`} />
             <span>连接状态</span>
             <span className="status-value">
-              {status.isConnected ? '在线' : '重连中...'}
+              {status.isConnected ? (isStale ? '数据过期' : '在线') : '重连中...'}
             </span>
           </div>
           <div className="status-item">
@@ -40,13 +41,22 @@ export default function App() {
             <span>最后更新</span>
             <span className="status-value">{timeDisplay} UTC</span>
           </div>
-          <div className="status-item">
-            <span>模式</span>
-            <span className="status-value">实时 RT</span>
-          </div>
+          {errorStats.totalErrors > 0 && (
+            <div className="status-item" title={`完整性:${errorStats.integrityErrors} 语法:${errorStats.syntaxErrors} 验证:${errorStats.validationErrors}`}>
+              <span className={`status-dot ${errorStats.isDegraded ? '' : 'warn'}`}
+                style={{ background: errorStats.isDegraded ? '#ff6b6b' : '#ffd43b' }} />
+              <span>报文异常</span>
+              <span className="status-value" style={{ color: errorStats.isDegraded ? '#ff6b6b' : '#ffd43b' }}>
+                {errorStats.consecutiveErrors}/{errorStats.totalErrors}
+                {errorStats.isDegraded ? ' 降级' : ''}
+              </span>
+            </div>
+          )}
         </div>
       </header>
-      <Dashboard data={data} status={status} />
+      <ErrorBoundary>
+        <Dashboard data={data} status={status} isStale={isStale} isDegraded={errorStats.isDegraded} />
+      </ErrorBoundary>
     </div>
   );
 }
