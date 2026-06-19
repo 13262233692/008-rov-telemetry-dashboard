@@ -1,0 +1,10 @@
+^D:\SOLO-0619-2\008-ROV-TELEMETRY-DASHBOARD\BACKEND\BUILD\CMAKEFILES\631808FC3B52AB83B3B60C2E82C0E321\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/SOLO-0619-2/008-rov-telemetry-dashboard/backend -BD:/SOLO-0619-2/008-rov-telemetry-dashboard/backend/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/SOLO-0619-2/008-rov-telemetry-dashboard/backend/build/ROV_Telemetry_Gateway.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

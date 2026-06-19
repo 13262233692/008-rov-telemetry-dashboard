@@ -1,0 +1,5 @@
+D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\src\main.cpp;D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\build\rov_gateway.dir\Release\main.obj
+D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\src\SerialPort.cpp;D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\build\rov_gateway.dir\Release\SerialPort.obj
+D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\src\NMEAParser.cpp;D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\build\rov_gateway.dir\Release\NMEAParser.obj
+D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\src\KalmanFilter.cpp;D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\build\rov_gateway.dir\Release\KalmanFilter.obj
+D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\src\WebSocketServer.cpp;D:\SOLO-0619-2\008-rov-telemetry-dashboard\backend\build\rov_gateway.dir\Release\WebSocketServer.obj
